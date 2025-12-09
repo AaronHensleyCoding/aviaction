@@ -10,6 +10,7 @@ let score = 0;
 
 let objManager = new ObjectManager();
 
+// Start webcam
 navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
     video.srcObject = stream;
 });
@@ -17,9 +18,9 @@ navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
 // MOTION DETECTION
 function detectMotion() {
     const temp = document.createElement("canvas");
+    const tctx = temp.getContext("2d");
     temp.width = 160;
     temp.height = 120;
-    const tctx = temp.getContext("2d");
 
     tctx.drawImage(video, 0, 0, 160, 120);
     const curr = tctx.getImageData(0, 0, 160, 120);
@@ -29,58 +30,46 @@ function detectMotion() {
         return { left: false, center: false, right: false };
     }
 
-    let left = 0, center = 0, right = 0;
+    let leftMotion = 0, centerMotion = 0, rightMotion = 0;
 
     for (let i = 0; i < curr.data.length; i += 4) {
-        const diff = Math.abs(curr.data[i] - prevFrame.data[i]) +
-                     Math.abs(curr.data[i+1] - prevFrame.data[i+1]) +
-                     Math.abs(curr.data[i+2] - prevFrame.data[i+2]);
+        const diff =
+            Math.abs(curr.data[i] - prevFrame.data[i]) +
+            Math.abs(curr.data[i + 1] - prevFrame.data[i + 1]) +
+            Math.abs(curr.data[i + 2] - prevFrame.data[i + 2]);
+
+        const x = (i / 4) % 160;
 
         if (diff > 40) {
-            let index = (i / 4) % 160;
-            if (index < 50) left++;
-            else if (index < 110) center++;
-            else right++;
+            if (x < 50) leftMotion++;
+            else if (x < 110) centerMotion++;
+            else rightMotion++;
         }
     }
 
     prevFrame = curr;
 
     return {
-        left: left > 200,
-        center: center > 200,
-        right: right > 200
+        left: leftMotion > 200,
+        center: centerMotion > 200,
+        right: rightMotion > 200
     };
 }
 
+// PROCESS HITS
 function processHits(motion) {
     objManager.objects.forEach(o => {
-        if (o.hit || !o.reachedPlayer()) return;
+        if (o.exploding || !o.reachedPlayer()) return;
 
         if (o.type === "punch" && motion.center) {
-            o.hit = true; score++;
+            o.hitObject(); score++;
         }
         if (o.type === "left" && motion.left) {
-            o.hit = true; score++;
+            o.hitObject(); score++;
         }
         if (o.type === "right" && motion.right) {
-            o.hit = true; score++;
+            o.hitObject(); score++;
         }
     });
 
-    document.getElementById("score").innerText = "Score: " + score;
-}
-
-// MAIN GAME LOOP
-function loop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    let motion = detectMotion();
-    processHits(motion);
-
-    objManager.update(ctx, canvas);
-
-    requestAnimationFrame(loop);
-}
-
-loop();
+    document.getElementById("score

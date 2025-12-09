@@ -1,42 +1,100 @@
-class FlyingObject {
-    constructor(type) {
-        this.type = type;
-        this.depth = 0;  // start far away
-        this.hit = false;
+// EXPLOSION PARTICLE CLASS
+class ExplosionParticle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.size = 12;
+        this.color = color;
 
-        if (type === "punch") this.color = "red";
-        if (type === "left")  this.color = "yellow";
-        if (type === "right") this.color = "cyan";
+        this.vx = (Math.random() - 0.5) * 12;
+        this.vy = (Math.random() - 0.5) * 12;
+        this.life = 20;
     }
 
     update() {
-        if (!this.hit)
-            this.depth += 0.01;   // move TOWARD the player
-    }
-
-    reachedPlayer() {
-        return this.depth >= 0.8;   // hit zone
+        this.x += this.vx;
+        this.y += this.vy;
+        this.size *= 0.9;
+        this.life--;
     }
 
     draw(ctx) {
-        const size = 200 * (1 + this.depth);   // grows as it comes closer
-
-        let x = ctx.canvas.width / 2;
-
-        if (this.type === "left")  x = ctx.canvas.width * 0.25;
-        if (this.type === "right") x = ctx.canvas.width * 0.75;
-
-        const y = ctx.canvas.height * 0.5;
-
-        ctx.globalAlpha = 0.9;
-        ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    isDead() {
+        return this.life <= 0 || this.size < 1;
+    }
+}
+
+// FLYING OBJECT CLASS
+class FlyingObject {
+    constructor(type) {
+        this.type = type;
+        this.depth = 0; // 0 = far away, 1 = at player
+
+        this.x = window.innerWidth / 2;
+        if (type === "left") this.x = window.innerWidth * 0.25;
+        if (type === "right") this.x = window.innerWidth * 0.75;
+
+        this.y = 0;
+        this.size = 120;
+
+        this.color =
+            type === "punch" ? "red" :
+            type === "left" ? "yellow" : "cyan";
+
+        this.hit = false;
+        this.exploding = false;
+        this.particles = [];
+    }
+
+    reachedPlayer() {
+        return this.depth >= 0.95;
+    }
+
+    hitObject() {
+        if (this.exploding) return;
+
+        this.exploding = true;
+        this.particles = [];
+
+        const px = this.x;
+        const py = this.y;
+
+        for (let i = 0; i < 20; i++) {
+            this.particles.push(new ExplosionParticle(px, py, this.color));
+        }
+    }
+
+    update() {
+
+        if (this.exploding) {
+            this.particles.forEach(p => p.update());
+            return;
+        }
+
+        this.depth += 0.012;
+        this.y = this.depth * window.innerHeight;
+    }
+
+    draw(ctx) {
+        if (this.exploding) {
+            this.particles.forEach(p => p.draw(ctx));
+            return;
+        }
+
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        ctx.arc(this.x, this.y, this.size * (1 - this.depth * 0.4), 0, Math.PI * 2);
         ctx.fill();
     }
 }
 
-
+// MANAGER CLASS
 class ObjectManager {
     constructor() {
         this.objects = [];
@@ -50,19 +108,24 @@ class ObjectManager {
         else this.objects.push(new FlyingObject("right"));
     }
 
-    update(ctx, canvas) {
+    update(ctx) {
         if (this.cooldown <= 0) {
             this.spawn();
-            this.cooldown = 120; // ~2 seconds
+            this.cooldown = 120;
         }
         this.cooldown--;
 
         this.objects.forEach(o => {
             o.update();
-            o.draw(ctx, canvas);
+            o.draw(ctx);
         });
 
-        // Remove passed objects
-        this.objects = this.objects.filter(o => o.depth > 0 && !o.markedHit);
+        // Remove passed or finished explosions
+        this.objects = this.objects.filter(o => {
+            if (o.exploding) return !o.particles.every(p => p.isDead());
+            return o.depth < 1 && !o.hit;
+        });
     }
 }
+
+window.ObjectManager = ObjectManager;

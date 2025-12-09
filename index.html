@@ -4,19 +4,14 @@
     <title>Punch & Dodge Game</title>
     <style>
         body { margin: 0; overflow: hidden; }
-        #videoFeed {
+        video { 
             position: fixed;
+            top: 0; left: 0;
             width: 100vw;
             height: 100vh;
             object-fit: cover;
-            opacity: 0.35;
-            z-index: -2;
-        }
-        #gameCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 2;
+            z-index: -1; 
+            opacity: 1;
         }
         #score {
             position: fixed;
@@ -25,17 +20,23 @@
             color: white;
             font-size: 40px;
             font-weight: bold;
-            z-index: 5;
+            text-shadow: 2px 2px 6px black;
+        }
+        canvas {
+            position: absolute;
+            top: 0; left: 0;
         }
     </style>
 </head>
 
 <body>
-    <video id="videoFeed" autoplay></video>
-    <canvas id="gameCanvas"></canvas>
-    <div id="score">Score: 0</div>
 
-    <script src="objects.js"></script>
-    <script src="game.js"></script>
+<video id="videoFeed" autoplay playsinline></video>
+<div id="score">Score: 0</div>
+<canvas id="gameCanvas"></canvas>
+
+<script src="objects.js"></script>
+<script src="game.js"></script>
+
 </body>
 </html>

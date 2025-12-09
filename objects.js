@@ -73,36 +73,41 @@ class FlyingObject {
         }
     }
 
-    update() {
-        // UPDATE EXPLOSION
-        if (this.exploding) {
-            this.particles.forEach(p => p.update());
-            return;
-        }
+    update(ctx) {
 
-        // NORMAL MOVEMENT
-        this.depth += 0.006;
-        this.y = this.depth * window.innerHeight;
+    this.spawnTimer--;
+    if (this.spawnTimer <= 0) {
+        this.spawnObject();
+        this.spawnTimer = this.spawnInterval;
     }
 
-    draw(ctx) {
-        if (this.exploding) {
-            this.particles.forEach(p => p.draw(ctx));
-            return;
+    const remaining = [];
+
+    for (let o of this.objects) {
+        o.update();
+        o.draw(ctx);
+
+        if (o.hit && !o.exploded) {
+            o.exploded = true;
+            this.createExplosion(o.x, o.y, o.color);
+            continue; // remove object
         }
 
-        ctx.beginPath();
-        ctx.fillStyle = this.color;
-        ctx.arc(
-            this.x,
-            this.y,
-            this.size * (1 - this.depth * 0.35),
-            0,
-            Math.PI * 2
-        );
-        ctx.fill();
+        if (o.depth >= 1.1) continue; // remove objects that pass the player
+
+        remaining.push(o);
     }
+
+    this.objects = remaining;
+
+    // update explosion particles
+    this.particles = this.particles.filter(p => {
+        p.update();
+        p.draw(ctx);
+        return !p.done;
+    });
 }
+
 
 
 // MANAGER

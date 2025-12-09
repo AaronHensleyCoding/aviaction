@@ -60,17 +60,14 @@ function detectMotion() {
 // HIT DETECTION
 function processHits(motion) {
     objManager.objects.forEach(o => {
-        if (o.exploding || !o.reachedPlayer()) return;
+        if (o.hit) return;
 
-        if (o.type === "punch" && motion.center) {
-            o.hitObject(); score++;
-        }
-        if (o.type === "left" && motion.left) {
-            o.hitObject(); score++;
-        }
-        if (o.type === "right" && motion.right) {
-            o.hitObject(); score++;
-        }
+        // match object to motion zone BEFORE it passes player fully
+        if (o.type === "punch" && motion.center) o.hit = true;
+        if (o.type === "left" && motion.left) o.hit = true;
+        if (o.type === "right" && motion.right) o.hit = true;
+
+        if (o.hit) score++;
     });
 
     document.getElementById("score").innerText = "Score: " + score;

@@ -6,52 +6,45 @@
 
     <style>
         body { margin: 0; overflow: hidden; background: black; }
-        video, canvas { 
+
+        #webcam {
             position: absolute;
-            top: 0; left: 0; 
-            width: 100vw; height: 100vh;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
             object-fit: cover;
+            z-index: 1;
         }
+
+        #overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 2;
+        }
+
         #score {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            font-size: 3rem;
+            top: 10px; left: 10px;
             color: white;
-            font-weight: bold;
-            z-index: 10;
+            font-size: 40px;
+            z-index: 3;
+            font-family: Arial, sans-serif;
         }
     </style>
 
-    <!-- MediaPipe Pose -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675471629/pose.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 </head>
 
 <body>
     <div id="score">Score: 0</div>
-
     <video id="webcam" autoplay playsinline></video>
-<canvas id="overlay"></canvas>
+    <canvas id="overlay"></canvas>
 
-<style>
-    #webcam {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        object-fit: cover;
-        z-index: 1;   /* lower layer */
-    }
-
-    #overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: 2;   /* ABOVE webcam */
-        pointer-events: none;
-    }
-</style>
+    <script src="objects.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

@@ -31,10 +31,27 @@
 <body>
     <div id="score">Score: 0</div>
 
-    <video id="webcam" autoplay></video>
-    <canvas id="overlay"></canvas>
+    <video id="webcam" autoplay playsinline></video>
+<canvas id="overlay"></canvas>
 
-    <script src="objects.js"></script>
-    <script src="game.js"></script>
-</body>
-</html>
+<style>
+    #webcam {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        object-fit: cover;
+        z-index: 1;   /* lower layer */
+    }
+
+    #overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 2;   /* ABOVE webcam */
+        pointer-events: none;
+    }
+</style>

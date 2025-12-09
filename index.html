@@ -1,51 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Punch & Dodge Game</title>
+    <title>Punch & Dodge – Camera Motion Version</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
         body { margin: 0; overflow: hidden; background: black; }
-
-        #webcam {
+        #videoFeed {
             position: absolute;
             top: 0; left: 0;
             width: 100vw;
             height: 100vh;
             object-fit: cover;
-            z-index: 1;
+            opacity: 0.4;
+            transform: scaleX(-1); /* Mirror for natural movement */
         }
-
-        #overlay {
+        #gameCanvas {
             position: absolute;
             top: 0; left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 2;
         }
-
         #score {
             position: absolute;
-            top: 10px; left: 10px;
+            top: 15px;
+            left: 15px;
             color: white;
             font-size: 40px;
-            z-index: 3;
             font-family: Arial, sans-serif;
+            z-index: 10;
         }
     </style>
-
-    <!-- MediaPipe -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675471629/pose.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 </head>
 
 <body>
-    <script>
-console.log("INDEX HTML LOADED");
-</script>
     <div id="score">Score: 0</div>
-    <video id="webcam" autoplay playsinline></video>
-    <canvas id="overlay"></canvas>
+    <video id="videoFeed" autoplay playsinline></video>
+    <canvas id="gameCanvas"></canvas>
 
     <script src="objects.js"></script>
     <script src="game.js"></script>

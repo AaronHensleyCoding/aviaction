@@ -2,22 +2,22 @@ class FlyingObject {
     constructor(type) {
         this.type = type; // "punch", "left", "right"
 
-        this.size = 120;     // base size
-        this.depth = 0;      // 0 = far away
-        this.speed = 0.025;  // movement speed
+        this.size = 100;
+        this.depth = 0;
+        this.speed = 0.015;
 
-        this.cx = window.innerWidth / 2;
-        this.cy = window.innerHeight / 2;
+        this.x = window.innerWidth / 2;
+        this.y = window.innerHeight / 2;
 
-        if (type === "left") this.cx -= 250;
-        if (type === "right") this.cx += 250;
+        if (type === "left")  this.x -= 250;
+        if (type === "right") this.x += 250;
 
-        this.color = 
+        this.color =
             type === "punch" ? "red" :
-            type === "left" ? "blue" :
+            type === "left"  ? "blue" :
             "green";
 
-        this.markedHit = false;
+        this.hit = false;
     }
 
     update() {
@@ -25,18 +25,13 @@ class FlyingObject {
     }
 
     draw(ctx) {
-        const size = this.size * (1 + this.depth * 4);  
+        const size = this.size * (1 + this.depth * 3);
         ctx.fillStyle = this.color;
-        ctx.fillRect(
-            this.cx - size / 2,
-            this.cy - size / 2,
-            size,
-            size
-        );
+        ctx.fillRect(this.x - size/2, this.y - size/2, size, size);
     }
 
     reachedPlayer() {
-        return this.depth >= 0.45; // controls hit zone
+        return this.depth >= 0.5;
     }
 }
 
@@ -56,7 +51,7 @@ class ObjectManager {
     update(ctx) {
         if (this.cooldown <= 0) {
             this.spawn();
-            this.cooldown = 150; // every ~2.5s
+            this.cooldown = 120;
         }
         this.cooldown--;
 
@@ -65,9 +60,6 @@ class ObjectManager {
             o.draw(ctx);
         });
 
-        // Remove boxes that passed the player
-        this.objects = this.objects.filter(o => o.depth < 1 && !o.markedHit);
+        this.objects = this.objects.filter(o => o.depth < 1 && !o.hit);
     }
 }
-
-window.ObjectManager = ObjectManager;

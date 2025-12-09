@@ -1,153 +1,142 @@
-// EXPLOSION PARTICLE CLASS
-class ExplosionParticle {
-    constructor(x, y, color) {
+// =========================
+// Falling Object
+// =========================
+class FallingObject {
+    constructor(type, x) {
+        this.type = type;
         this.x = x;
-        this.y = y;
-        this.size = 15;
-        this.color = color;
+        this.y = -200;     // Start above screen
+        this.radius = 120;
 
-        this.vx = (Math.random() - 0.5) * 14;
-        this.vy = (Math.random() - 0.5) * 14;
-        this.life = 25; // frames total
+        // Colors by type
+        this.color =
+            type === "left" ? "yellow" :
+            type === "right" ? "cyan" :
+            "red";
+
+        this.speed = 3; // falling speed
+        this.hit = false;
+        this.exploded = false;
+        this.depth = 0; // 0 = far, 1 = at player
     }
 
     update() {
-        this.x += this.vx;
-        this.y += this.vy;
-
-        this.size *= 0.88;  // shrink
-        this.life--;         // countdown
+        this.y += this.speed;
+        this.depth = this.y / window.innerHeight;
     }
 
     draw(ctx) {
         ctx.beginPath();
         ctx.fillStyle = this.color;
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
     }
 
-    isDead() {
-        return this.life <= 0 || this.size < 1;
-    }
-}
-
-
-// FLYING OBJECT CLASS
-class FlyingObject {
-    constructor(type) {
-        this.type = type;
-
-        this.depth = 0;
-        this.y = 0;
-        this.hit = false;
-
-        this.x =
-            type === "left" ? window.innerWidth * 0.25 :
-            type === "right" ? window.innerWidth * 0.75 :
-            window.innerWidth * 0.5;
-
-        this.size = 120;
-        this.color =
-            type === "punch" ? "red" :
-            type === "left" ? "yellow" : "cyan";
-
-        this.exploding = false;
-        this.particles = [];
-    }
-
     reachedPlayer() {
-        return this.depth >= 0.95;
+        return this.depth >= 0.85;
     }
-
-    hitObject() {
-        if (this.exploding) return;
-
-        this.hit = true;
-        this.exploding = true;
-
-        const px = this.x, py = this.y;
-        this.particles = [];
-
-        for (let i = 0; i < 25; i++) {
-            this.particles.push(new ExplosionParticle(px, py, this.color));
-        }
-    }
-
-    update(ctx) {
-
-    this.spawnTimer--;
-    if (this.spawnTimer <= 0) {
-        this.spawnObject();
-        this.spawnTimer = this.spawnInterval;
-    }
-
-    const remaining = [];
-
-    for (let o of this.objects) {
-        o.update();
-        o.draw(ctx);
-
-        if (o.hit && !o.exploded) {
-            o.exploded = true;
-            this.createExplosion(o.x, o.y, o.color);
-            continue; // remove object
-        }
-
-        if (o.depth >= 1.1) continue; // remove objects that pass the player
-
-        remaining.push(o);
-    }
-
-    this.objects = remaining;
-
-    // update explosion particles
-    this.particles = this.particles.filter(p => {
-        p.update();
-        p.draw(ctx);
-        return !p.done;
-    });
 }
 
+// =========================
+// Particle (explosion)
+// =========================
+class ExplosionParticle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 10;
+        this.vy = (Math.random() - 0.5) * 10;
+        this.life = 25;
+        this.color = color;
+        this.done = false;
+    }
 
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life--;
 
-// MANAGER
+        if (this.life <= 0) this.done = true;
+    }
+
+    draw(ctx) {
+        ctx.beginPath();
+        ctx.fillStyle = this.color;
+        ctx.arc(this.x, this.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// =========================
+// Object Manager
+// =========================
 class ObjectManager {
     constructor() {
         this.objects = [];
-        this.cooldown = 0;
+        this.particles = [];
+
+        this.spawnTimer = 0;
+        this.spawnInterval = 60; // ~1 per second
     }
 
-    spawn() {
+    spawnObject() {
         const r = Math.random();
-        const type = r < 0.33 ? "punch" : r < 0.66 ? "left" : "right";
-        this.objects.push(new FlyingObject(type));
+        const x = (r < 0.33) ? 300 :
+                  (r < 0.66) ? window.innerWidth / 2 :
+                               window.innerWidth - 300;
+
+        const type = (r < 0.33) ? "left" :
+                     (r < 0.66) ? "punch" : "right";
+
+        this.objects.push(new FallingObject(type, x));
+    }
+
+    createExplosion(x, y, color) {
+        for (let i = 0; i < 25; i++) {
+            this.particles.push(new ExplosionParticle(x, y, color));
+        }
     }
 
     update(ctx) {
-        // SPAWN NEW
-        if (this.cooldown <= 0) {
-            this.spawn();
-            this.cooldown = 95;  // spawn rate
-        }
-        this.cooldown--;
 
-        // UPDATE & DRAW
-        this.objects.forEach(o => {
+        // Spawn new objects
+        this.spawnTimer--;
+        if (this.spawnTimer <= 0) {
+            this.spawnObject();
+            this.spawnTimer = this.spawnInterval;
+        }
+
+        const stillAlive = [];
+
+        // Update objects
+        for (let o of this.objects) {
             o.update();
             o.draw(ctx);
-        });
 
-        // 🔥 **REMOVE FINISHED EXPLOSIONS + PASSED OBJECTS**
-        this.objects = this.objects.filter(o => {
-
-            if (o.exploding) {
-                const done = o.particles.every(p => p.isDead());
-                return !done;  // keep until explosion finished
+            // Trigger explosion
+            if (o.hit && !o.exploded) {
+                o.exploded = true;
+                this.createExplosion(o.x, o.y, o.color);
+                continue; // remove object from list
             }
 
-            return o.depth < 1; // keep until passes player
+            // Remove if passed player
+            if (o.depth >= 1.1) continue;
+
+            stillAlive.push(o);
+        }
+
+        this.objects = stillAlive;
+
+        // Update explosion particles
+        this.particles = this.particles.filter(p => {
+            if (!p) return false;
+            p.update();
+            p.draw(ctx);
+            return !p.done;
         });
     }
 }
 
+// Expose globally so game.js can access it
 window.ObjectManager = ObjectManager;

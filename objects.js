@@ -1,41 +1,41 @@
 class FlyingObject {
     constructor(type) {
-        this.type = type; // punch, left, right
-        this.depth = 1.5;
+        this.type = type;
+        this.depth = 0;  // start far away
         this.hit = false;
 
-        // screen positions
-        this.x =
-            type === "left" ? 0.25 :
-            type === "right" ? 0.75 :
-            0.5;
-
-        this.size = 120;
+        if (type === "punch") this.color = "red";
+        if (type === "left")  this.color = "yellow";
+        if (type === "right") this.color = "cyan";
     }
 
     update() {
-        if (this.hit) return;
-        this.depth -= 0.01;
+        if (!this.hit)
+            this.depth += 0.01;   // move TOWARD the player
     }
 
     reachedPlayer() {
-        return this.depth <= 0.45;
+        return this.depth >= 0.8;   // hit zone
     }
 
-    draw(ctx, canvas) {
-        const screenX = this.x * canvas.width;
-        const screenY = this.depth * canvas.height;
+    draw(ctx) {
+        const size = 200 * (1 + this.depth);   // grows as it comes closer
 
-        ctx.fillStyle =
-            this.type === "punch" ? "red" :
-            this.type === "left" ? "yellow" :
-            "cyan";
+        let x = ctx.canvas.width / 2;
 
+        if (this.type === "left")  x = ctx.canvas.width * 0.25;
+        if (this.type === "right") x = ctx.canvas.width * 0.75;
+
+        const y = ctx.canvas.height * 0.5;
+
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = this.color;
         ctx.beginPath();
-        ctx.arc(screenX, screenY, this.size, 0, Math.PI * 2);
+        ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
         ctx.fill();
     }
 }
+
 
 class ObjectManager {
     constructor() {

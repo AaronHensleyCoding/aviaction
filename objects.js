@@ -81,7 +81,7 @@ class FlyingObject {
         }
 
         // NORMAL MOVEMENT
-        this.depth += 0.014;
+        this.depth += 0.006;
         this.y = this.depth * window.innerHeight;
     }
 

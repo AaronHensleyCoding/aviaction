@@ -12,16 +12,21 @@
     }
 
     /* Webcam behind everything */
-    #videoFeed {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        object-fit: cover;
-        z-index: 1;
-        opacity: 0.35;  /* slightly faded */
-    }
+   #videoFeed {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+
+    /* 🔥 Flip webcam horizontally (fix left/right) */
+    transform: scaleX(-1);
+    -webkit-transform: scaleX(-1);
+
+    z-index: 1;
+    opacity: 0.35;  /* slightly faded */
+}
 
     /* Game canvas */
     #gameCanvas {

@@ -3,19 +3,20 @@ class ExplosionParticle {
     constructor(x, y, color) {
         this.x = x;
         this.y = y;
-        this.size = 12;
+        this.size = 15;
         this.color = color;
 
-        this.vx = (Math.random() - 0.5) * 12;
-        this.vy = (Math.random() - 0.5) * 12;
-        this.life = 20;
+        this.vx = (Math.random() - 0.5) * 14;
+        this.vy = (Math.random() - 0.5) * 14;
+        this.life = 25; // frames total
     }
 
     update() {
         this.x += this.vx;
         this.y += this.vy;
-        this.size *= 0.9;
-        this.life--;
+
+        this.size *= 0.88;  // shrink
+        this.life--;         // countdown
     }
 
     draw(ctx) {
@@ -30,24 +31,26 @@ class ExplosionParticle {
     }
 }
 
+
 // FLYING OBJECT CLASS
 class FlyingObject {
     constructor(type) {
         this.type = type;
-        this.depth = 0; // 0 = far away, 1 = at player
 
-        this.x = window.innerWidth / 2;
-        if (type === "left") this.x = window.innerWidth * 0.25;
-        if (type === "right") this.x = window.innerWidth * 0.75;
-
+        this.depth = 0;
         this.y = 0;
-        this.size = 120;
+        this.hit = false;
 
+        this.x =
+            type === "left" ? window.innerWidth * 0.25 :
+            type === "right" ? window.innerWidth * 0.75 :
+            window.innerWidth * 0.5;
+
+        this.size = 120;
         this.color =
             type === "punch" ? "red" :
             type === "left" ? "yellow" : "cyan";
 
-        this.hit = false;
         this.exploding = false;
         this.particles = [];
     }
@@ -59,25 +62,26 @@ class FlyingObject {
     hitObject() {
         if (this.exploding) return;
 
+        this.hit = true;
         this.exploding = true;
+
+        const px = this.x, py = this.y;
         this.particles = [];
 
-        const px = this.x;
-        const py = this.y;
-
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 25; i++) {
             this.particles.push(new ExplosionParticle(px, py, this.color));
         }
     }
 
     update() {
-
+        // UPDATE EXPLOSION
         if (this.exploding) {
             this.particles.forEach(p => p.update());
             return;
         }
 
-        this.depth += 0.012;
+        // NORMAL MOVEMENT
+        this.depth += 0.014;
         this.y = this.depth * window.innerHeight;
     }
 
@@ -89,12 +93,19 @@ class FlyingObject {
 
         ctx.beginPath();
         ctx.fillStyle = this.color;
-        ctx.arc(this.x, this.y, this.size * (1 - this.depth * 0.4), 0, Math.PI * 2);
+        ctx.arc(
+            this.x,
+            this.y,
+            this.size * (1 - this.depth * 0.35),
+            0,
+            Math.PI * 2
+        );
         ctx.fill();
     }
 }
 
-// MANAGER CLASS
+
+// MANAGER
 class ObjectManager {
     constructor() {
         this.objects = [];
@@ -103,27 +114,33 @@ class ObjectManager {
 
     spawn() {
         const r = Math.random();
-        if (r < 0.33) this.objects.push(new FlyingObject("punch"));
-        else if (r < 0.66) this.objects.push(new FlyingObject("left"));
-        else this.objects.push(new FlyingObject("right"));
+        const type = r < 0.33 ? "punch" : r < 0.66 ? "left" : "right";
+        this.objects.push(new FlyingObject(type));
     }
 
     update(ctx) {
+        // SPAWN NEW
         if (this.cooldown <= 0) {
             this.spawn();
-            this.cooldown = 120;
+            this.cooldown = 95;  // spawn rate
         }
         this.cooldown--;
 
+        // UPDATE & DRAW
         this.objects.forEach(o => {
             o.update();
             o.draw(ctx);
         });
 
-        // Remove passed or finished explosions
+        // 🔥 **REMOVE FINISHED EXPLOSIONS + PASSED OBJECTS**
         this.objects = this.objects.filter(o => {
-            if (o.exploding) return !o.particles.every(p => p.isDead());
-            return o.depth < 1 && !o.hit;
+
+            if (o.exploding) {
+                const done = o.particles.every(p => p.isDead());
+                return !done;  // keep until explosion finished
+            }
+
+            return o.depth < 1; // keep until passes player
         });
     }
 }

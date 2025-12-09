@@ -1,37 +1,39 @@
 class FlyingObject {
     constructor(type) {
-        this.type = type; // "punch", "left", "right"
-
-        this.size = 100;
-        this.depth = 0;
-        this.speed = 0.015;
-
-        this.x = window.innerWidth / 2;
-        this.y = window.innerHeight / 2;
-
-        if (type === "left")  this.x -= 250;
-        if (type === "right") this.x += 250;
-
-        this.color =
-            type === "punch" ? "red" :
-            type === "left"  ? "blue" :
-            "green";
-
+        this.type = type; // punch, left, right
+        this.depth = 1.5;
         this.hit = false;
+
+        // screen positions
+        this.x =
+            type === "left" ? 0.25 :
+            type === "right" ? 0.75 :
+            0.5;
+
+        this.size = 120;
     }
 
     update() {
-        this.depth += this.speed;
-    }
-
-    draw(ctx) {
-        const size = this.size * (1 + this.depth * 3);
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x - size/2, this.y - size/2, size, size);
+        if (this.hit) return;
+        this.depth -= 0.01;
     }
 
     reachedPlayer() {
-        return this.depth >= 0.5;
+        return this.depth <= 0.45;
+    }
+
+    draw(ctx, canvas) {
+        const screenX = this.x * canvas.width;
+        const screenY = this.depth * canvas.height;
+
+        ctx.fillStyle =
+            this.type === "punch" ? "red" :
+            this.type === "left" ? "yellow" :
+            "cyan";
+
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, this.size, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
@@ -43,23 +45,24 @@ class ObjectManager {
 
     spawn() {
         const r = Math.random();
-        if (r < 0.6) this.objects.push(new FlyingObject("punch"));
-        else if (r < 0.8) this.objects.push(new FlyingObject("left"));
+        if (r < 0.33) this.objects.push(new FlyingObject("punch"));
+        else if (r < 0.66) this.objects.push(new FlyingObject("left"));
         else this.objects.push(new FlyingObject("right"));
     }
 
-    update(ctx) {
+    update(ctx, canvas) {
         if (this.cooldown <= 0) {
             this.spawn();
-            this.cooldown = 120;
+            this.cooldown = 120; // ~2 seconds
         }
         this.cooldown--;
 
         this.objects.forEach(o => {
             o.update();
-            o.draw(ctx);
+            o.draw(ctx, canvas);
         });
 
-        this.objects = this.objects.filter(o => o.depth < 1 && !o.hit);
+        // Remove passed objects
+        this.objects = this.objects.filter(o => o.depth > 0 && !o.markedHit);
     }
 }

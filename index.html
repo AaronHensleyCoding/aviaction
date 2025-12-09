@@ -1,40 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Punch & Dodge – Camera Motion Version</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <title>Punch & Dodge Game</title>
     <style>
-        body { margin: 0; overflow: hidden; background: black; }
+        body { margin: 0; overflow: hidden; }
         #videoFeed {
-            position: absolute;
-            top: 0; left: 0;
+            position: fixed;
             width: 100vw;
             height: 100vh;
             object-fit: cover;
-            opacity: 0.4;
-            transform: scaleX(-1); /* Mirror for natural movement */
+            opacity: 0.35;
+            z-index: -2;
         }
         #gameCanvas {
-            position: absolute;
-            top: 0; left: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 2;
         }
         #score {
-            position: absolute;
-            top: 15px;
-            left: 15px;
+            position: fixed;
+            top: 20px;
+            left: 20px;
             color: white;
             font-size: 40px;
-            font-family: Arial, sans-serif;
-            z-index: 10;
+            font-weight: bold;
+            z-index: 5;
         }
     </style>
 </head>
 
 <body>
-    <div id="score">Score: 0</div>
-    <video id="videoFeed" autoplay playsinline></video>
+    <video id="videoFeed" autoplay></video>
     <canvas id="gameCanvas"></canvas>
+    <div id="score">Score: 0</div>
 
     <script src="objects.js"></script>
     <script src="game.js"></script>

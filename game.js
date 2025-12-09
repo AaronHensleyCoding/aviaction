@@ -10,18 +10,16 @@ let score = 0;
 
 let objManager = new ObjectManager();
 
-// Start webcam
 navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
     video.srcObject = stream;
 });
 
-// --- MOTION DETECTION LOGIC --- //
-
+// MOTION DETECTION
 function detectMotion() {
     const temp = document.createElement("canvas");
-    const tctx = temp.getContext("2d");
     temp.width = 160;
     temp.height = 120;
+    const tctx = temp.getContext("2d");
 
     tctx.drawImage(video, 0, 0, 160, 120);
     const curr = tctx.getImageData(0, 0, 160, 120);
@@ -31,36 +29,29 @@ function detectMotion() {
         return { left: false, center: false, right: false };
     }
 
-    let leftMotion = 0;
-    let centerMotion = 0;
-    let rightMotion = 0;
+    let left = 0, center = 0, right = 0;
 
     for (let i = 0; i < curr.data.length; i += 4) {
-        const diff =
-            Math.abs(curr.data[i] - prevFrame.data[i]) +
-            Math.abs(curr.data[i + 1] - prevFrame.data[i + 1]) +
-            Math.abs(curr.data[i + 2] - prevFrame.data[i + 2]);
-
-        const pixelIndex = i / 4;
-        const x = pixelIndex % 160;
+        const diff = Math.abs(curr.data[i] - prevFrame.data[i]) +
+                     Math.abs(curr.data[i+1] - prevFrame.data[i+1]) +
+                     Math.abs(curr.data[i+2] - prevFrame.data[i+2]);
 
         if (diff > 40) {
-            if (x < 50) leftMotion++;
-            else if (x < 110) centerMotion++;
-            else rightMotion++;
+            let index = (i / 4) % 160;
+            if (index < 50) left++;
+            else if (index < 110) center++;
+            else right++;
         }
     }
 
     prevFrame = curr;
 
     return {
-        left: leftMotion > 200,
-        center: centerMotion > 200,
-        right: rightMotion > 200
+        left: left > 200,
+        center: center > 200,
+        right: right > 200
     };
 }
-
-// --- HIT DETECTION --- //
 
 function processHits(motion) {
     objManager.objects.forEach(o => {
@@ -80,15 +71,14 @@ function processHits(motion) {
     document.getElementById("score").innerText = "Score: " + score;
 }
 
-// --- MAIN GAME LOOP --- //
-
+// MAIN GAME LOOP
 function loop() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const motion = detectMotion();
+    let motion = detectMotion();
     processHits(motion);
 
-    objManager.update(ctx);
+    objManager.update(ctx, canvas);
 
     requestAnimationFrame(loop);
 }

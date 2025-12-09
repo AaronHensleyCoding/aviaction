@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Punch & Dodge Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; overflow: hidden; background: black; }
+        video, canvas { 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100vw; 
+            height: 100vh; 
+            object-fit: cover;
+        }
+        #debug { position: absolute; top: 10px; left: 10px; color: white; font-size: 24px; }
+    </style>
+
+    <!-- MediaPipe Pose -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+</head>
+
+<body>
+    <video id="webcam" autoplay></video>
+    <canvas id="overlay"></canvas>
+    <div id="debug">Loading...</div>
+
+    <script src="game.js"></script>
+</body>
+</html>

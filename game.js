@@ -5,15 +5,17 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let lastRightWristX = null;
-let lastLeftShoulderX = null;
+let score = 0;
+let lastPunch = false;
+let lastDodgeLeft = false;
+let lastDodgeRight = false;
 
-document.getElementById("debug").innerText = "Initializing camera...";
+let objectManager = new ObjectManager();
+
+document.getElementById("score").innerText = `Score: ${score}`;
 
 async function initCamera() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720 }
-    });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     video.srcObject = stream;
 }
 initCamera();
@@ -25,51 +27,71 @@ function detectMoves(landmarks) {
 
     if (!rightWrist || !leftShoulder || !rightShoulder) return;
 
-    // Detect Punch (fast forward movement)
-    if (lastRightWristX !== null) {
-        const movement = lastRightWristX - rightWrist.x;
-        if (movement > 0.15) {
-            console.log("PUNCH!");
-            document.getElementById("debug").innerText = "👊 PUNCH!";
-        }
-    }
-    lastRightWristX = rightWrist.x;
+    // Punch detection (fast forward motion)
+    let punch = false;
+    if (rightWrist.x < 0.25) punch = true; // crude threshold initially
 
-    // Detect Dodge Left (body shifts left)
-    const bodyCenterX = (leftShoulder.x + rightShoulder.x) / 2;
-    if (lastLeftShoulderX !== null) {
-        const shift = lastLeftShoulderX - bodyCenterX;
+    // Dodge detection (shift left/right)
+    const center = (leftShoulder.x + rightShoulder.x) / 2;
 
-        if (shift > 0.05) {
-            console.log("DODGE RIGHT");
-            document.getElementById("debug").innerText = "➡️ DODGE RIGHT!";
+    const dodgeLeft = center < 0.40;
+    const dodgeRight = center > 0.60;
+
+    return { punch, dodgeLeft, dodgeRight };
+}
+
+function processHits(moves) {
+    objectManager.objects.forEach(obj => {
+        if (obj.hit) return;
+
+        if (!obj.isInHitZone()) return;
+
+        if (obj.type === "punch" && moves.punch) {
+            obj.hit = true;
+            score++;
         }
-        if (shift < -0.05) {
-            console.log("DODGE LEFT");
-            document.getElementById("debug").innerText = "⬅️ DODGE LEFT!";
+
+        if (obj.type === "left" && moves.dodgeLeft) {
+            obj.hit = true;
+            score++;
         }
-    }
-    lastLeftShoulderX = bodyCenterX;
+
+        if (obj.type === "right" && moves.dodgeRight) {
+            obj.hit = true;
+            score++;
+        }
+
+        if (obj.hit) {
+            document.getElementById("score").innerText = `Score: ${score}`;
+        }
+    });
+
+    // Remove objects that were hit
+    objectManager.objects = objectManager.objects.filter(o => !o.hit);
 }
 
 function onResults(results) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (results.poseLandmarks) {
-        detectMoves(results.poseLandmarks);
+        const moves = detectMoves(results.poseLandmarks);
+        if (moves) {
+            processHits(moves);
+        }
     }
+
+    objectManager.update(ctx);
 }
 
 const pose = new Pose.Pose({
-    locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+    locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`
 });
 
 pose.setOptions({
     modelComplexity: 0,
     smoothLandmarks: true,
-    enableSegmentation: false,
-    minDetectionConfidence: 0.6,
-    minTrackingConfidence: 0.6
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5
 });
 
 pose.onResults(onResults);

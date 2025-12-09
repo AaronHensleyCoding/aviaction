@@ -3,16 +3,24 @@
 <head>
     <title>Punch & Dodge Game</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <style>
         body { margin: 0; overflow: hidden; background: black; }
         video, canvas { 
-            position: absolute; 
+            position: absolute;
             top: 0; left: 0; 
-            width: 100vw; 
-            height: 100vh; 
+            width: 100vw; height: 100vh;
             object-fit: cover;
         }
-        #debug { position: absolute; top: 10px; left: 10px; color: white; font-size: 24px; }
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 3rem;
+            color: white;
+            font-weight: bold;
+            z-index: 10;
+        }
     </style>
 
     <!-- MediaPipe Pose -->
@@ -21,10 +29,12 @@
 </head>
 
 <body>
+    <div id="score">Score: 0</div>
+
     <video id="webcam" autoplay></video>
     <canvas id="overlay"></canvas>
-    <div id="debug">Loading...</div>
 
+    <script src="objects.js"></script>
     <script src="game.js"></script>
 </body>
 </html>
